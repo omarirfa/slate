@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { money, pendingPayments } from "@/lib/engine";
 import type { CapabilityView, LoanState, Role } from "@/lib/types";
 import type { ModelContextLike, RegisteredTool } from "@/lib/webmcp";
+import { Avatar } from "@/components/People";
 
 interface Props {
   caps: CapabilityView[];
@@ -51,6 +52,7 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
   const [output, setOutput] = useState<{ name: string; text: string; refused: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [showTheirs, setShowTheirs] = useState(false);
+  const [showClosed, setShowClosed] = useState(false);
   const [pulse, setPulse] = useState<string | null>(null);
   const prev = useRef<Map<string, boolean> | null>(null);
 
@@ -63,6 +65,15 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
       }
       if (changed.size) {
         setFlash(changed);
+        // A capability that just shut is the whole point of the demonstration.
+        // If it flashed inside a collapsed list nobody would see it, so a
+        // change on the closed side opens the disclosure once.
+        for (const name of changed) {
+          if (now.get(name) === false) {
+            setShowClosed(true);
+            break;
+          }
+        }
         const timer = setTimeout(() => setFlash(new Set()), 2600);
         prev.current = now;
         return () => clearTimeout(timer);
@@ -243,6 +254,8 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
     <section className="panel" aria-labelledby="actions-title">
       <div className="panel__head">
         <h2 className="panel__title" id="actions-title">
+          {/* The surface belongs to a person, so show the person. */}
+          <Avatar name={myName} className="avatar" />
           What {myName} can do right now
         </h2>
       </div>
@@ -250,10 +263,24 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
       <ul className="actions">{open.map(renderRow)}</ul>
 
       {closed.length > 0 && (
-        <>
-          <p className="actions__divider">Closed by a clause</p>
-          <ul className="actions actions--closed">{closed.map(renderRow)}</ul>
-        </>
+        <div className="actions__theirs">
+          {/*
+            Closed rows used to render expanded, so a fresh slate opened with a
+            wall of seven struck-through entries above the three you can act on.
+            The closed set is reference material — why something is unavailable —
+            not the thing you came to do, so it collapses behind a count, the
+            same way the other party's side already did.
+          */}
+          <button
+            type="button"
+            className="actions__toggle"
+            onClick={() => setShowClosed((v) => !v)}
+            aria-expanded={showClosed}
+          >
+            {showClosed ? "Hide" : "Show"} closed by a clause ({closed.length})
+          </button>
+          {showClosed && <ul className="actions actions--closed">{closed.map(renderRow)}</ul>}
+        </div>
       )}
 
       {theirs.length > 0 && (

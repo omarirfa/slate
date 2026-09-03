@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/PageShell";
 
+import People from "@/components/People";
+
 export const metadata: Metadata = {
   title: "The problem — Slate",
   description: "Why lending money to someone you like goes wrong, and what would have to be true for it not to.",
@@ -16,6 +18,8 @@ export default function ProblemPage() {
         <p className="prose__lede">
           It goes wrong the same way every time, and the money is rarely the part that hurts.
         </p>
+
+        <People scene="asking" className="people people--page" />
 
         <h2>What actually happens</h2>
         <p>

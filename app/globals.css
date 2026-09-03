@@ -27,6 +27,8 @@
 
   --color-positive:      oklch(48% 0.105 156);
   --color-positive-soft: oklch(93% 0.033 156);
+  --color-caution:       oklch(54% 0.098 78);
+  --color-caution-soft:  oklch(94% 0.036 78);
   --color-error:         oklch(52% 0.170 26);
 
   /* spacing — 4pt base, named by role */
@@ -97,6 +99,8 @@
 
   --color-positive:      oklch(72% 0.095 156);
   --color-positive-soft: oklch(26% 0.040 156);
+  --color-caution:       oklch(78% 0.088 78);
+  --color-caution-soft:  oklch(27% 0.042 78);
   --color-error:         oklch(68% 0.140 26);
 
   --shadow-whisper: 0 1px 2px oklch(6% 0.01 62 / 0.4);
@@ -126,6 +130,33 @@ body {
   line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+  Light/dark used to snap. Every surface reads its colour from a token, so
+  easing the colour properties themselves carries the whole page across at
+  once. Only colours are listed: transitioning `all` would also animate
+  layout and drag every unrelated hover with it.
+*/
+body,
+body *:not(svg):not(svg *) {
+  transition:
+    background-color var(--theme-swap) ease,
+    border-color var(--theme-swap) ease,
+    color var(--theme-swap) ease,
+    fill var(--theme-swap) ease,
+    stroke var(--theme-swap) ease;
+}
+
+/* The swap is a deliberate moment; ordinary interaction should stay quick. */
+:root {
+  --theme-swap: 260ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --theme-swap: 1ms;
+  }
 }
 
 [data-theme="dark"] body {
@@ -431,5 +462,117 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ----------------------------------------------------------------- people */
+/*
+  Line-art figures (components/People.tsx). Monochrome and unfilled by
+  construction, so all the stylesheet decides is size, colour and air.
+*/
+.people {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 22rem;
+  /* Monochrome and confident: line art this sparse disappears if it is faint. */
+  color: var(--color-ink-2);
+  opacity: 0.72;
+}
+
+.people--hero {
+  max-width: 26rem;
+  margin: var(--space-xl) 0 var(--space-xs);
+}
+
+.people--page {
+  max-width: 18rem;
+  margin: var(--space-lg) 0 var(--space-xl);
+}
+
+/* Beside a name: sized in em so it rides the text it belongs to. */
+.avatar {
+  width: 1.55em;
+  height: 1.55em;
+  vertical-align: -0.42em;
+  margin-right: 0.4em;
+  color: var(--color-neutral);
+  flex: none;
+}
+
+.avatar--pair {
+  width: 2.6em;
+  height: 2.6em;
+  vertical-align: -0.9em;
+  color: var(--color-rule-2);
+}
+
+/* ------------------------------------------------------------------- logo */
+/*
+  Mark plus live text. The wordmark is not outlined: it stays selectable and
+  it follows the type ramp, so there is nothing to re-export when type changes.
+*/
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.46em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.logo__mark {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  color: var(--color-accent);
+}
+
+.logo__word {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* -------------------------------------------------------------- voxel art */
+/*
+  Generated illustrations (see art/). Every asset is at least twice its display
+  size, so nothing is upscaled. `width` and `height` are set as attributes on
+  the elements themselves, which is what reserves the box and prevents the page
+  jumping as they load; `height: auto` here keeps the ratio as the width scales
+  down to the column.
+*/
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 370px on desktop; on a narrower column it simply takes the column width. */
+.art--hero {
+  max-width: 23.125rem;
+  margin: var(--space-lg) 0 var(--space-xl);
+}
+
+.art--desk {
+  max-width: 18.75rem;
+  margin: var(--space-lg) auto var(--space-md);
+}
+
+/* A step's avatar sits on the meta line beside the name it belongs to. */
+.step__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.art-avatar {
+  width: 30px;
+  height: auto;
+  flex: none;
+}
+
+@media (max-width: 40rem) {
+  .art-avatar {
+    width: 26px;
   }
 }

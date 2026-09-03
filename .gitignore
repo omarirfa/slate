@@ -14,4 +14,4 @@ next-env.d.ts
 .dev.vars
 bank/.wrangler/
 bank/.wrangler-dry-bank/
-.zip
+*.zip

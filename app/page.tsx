@@ -7,6 +7,7 @@ import Actions from "@/components/Actions";
 import SlateBoard from "@/components/SlateBoard";
 import HeroLoop from "@/components/HeroLoop";
 import Opener from "@/components/Opener";
+import { Avatar } from "@/components/People";
 import KeyBox from "@/components/KeyBox";
 import { loadOwnKey, saveOwnKey, type OwnKey } from "@/lib/keys";
 import { NAV } from "@/components/PageShell";
@@ -22,7 +23,13 @@ import { buildTools } from "@/lib/tools";
 import { StandInAgent, type AgentMode, type TraceEntry } from "@/lib/agent";
 import type { StandInMood } from "@/lib/standin";
 import { DEFAULT_TERMS, type LoanState, type Role } from "@/lib/types";
-import { ToolRegistry, providerLabel, type Provider, type RegisteredTool } from "@/lib/webmcp";
+import {
+  ToolRegistry,
+  providerLabel,
+  providerStatus,
+  type Provider,
+  type RegisteredTool,
+} from "@/lib/webmcp";
 import type { HalfPresence, Presence } from "@/lib/store";
 
 /** Polling is the fallback when the event stream drops. */
@@ -143,9 +150,12 @@ export default function Page() {
     if (theme === "dark" || theme === "light") setTheme(theme);
 
     // The demo layer (clock, simulator, stand-in, console) is off unless asked
-    // for. ?demo=1 turns it on; the switch in the banner remembers the choice.
+    // for. ?demo=1 turns it on; the switch in the banner remembers the choice
+    // for this tab only. It used to be remembered in localStorage, which meant
+    // one visit to ?demo=1 left the scaffolding switched on for good — someone
+    // opening a real slate weeks later still got the whole workbench.
     const demoParam = params.get("demo");
-    const storedDemo = localStorage.getItem("slate-demo");
+    const storedDemo = sessionStorage.getItem("slate-demo");
     setDemoState(demoParam === "1" || (demoParam !== "0" && storedDemo === "1"));
     if (params.get("autoplay") === "1") {
       setAutoplay(true);
@@ -218,7 +228,7 @@ export default function Page() {
 
   const setDemo = useCallback((v: boolean) => {
     setDemoState(v);
-    localStorage.setItem("slate-demo", v ? "1" : "0");
+    sessionStorage.setItem("slate-demo", v ? "1" : "0");
   }, []);
 
   useEffect(() => {
@@ -522,8 +532,8 @@ export default function Page() {
             <HeroLoop />
             <p className="entry__note">
               Asking for time can&rsquo;t be ignored. The borrower gets one pause a year without asking.
-              Default waits for the cure period. Wiping the slate takes every collection tool with it. The
-              name is old: a tally stick was split lengthways so neither half could be altered alone.
+              Default waits for the cure period. Wiping the slate takes every collection tool with it.
+              Neither half can be altered by one person alone.
             </p>
           </div>
 
@@ -595,7 +605,21 @@ export default function Page() {
             )}
           </section>
 
-          {p === "drafting" && <TermsForm state={state} dispatch={dispatch} />}
+          {p === "drafting" && (
+            /*
+              Keyed on the terms themselves. The fields seed from `state.terms`
+              with useState, which only runs on mount — and the form mounts
+              against DEFAULT_TERMS before the room's real state arrives, so it
+              sat showing 2400 on a slate opened for a different amount. The key
+              remounts it whenever the agreed terms actually change. Typing does
+              not change `state.terms`, so it cannot interrupt someone mid-edit.
+            */
+            <TermsForm
+              key={`${state.terms.principal}-${state.terms.installmentCount}-${state.terms.reminderBudget}-${state.terms.cureDays}`}
+              state={state}
+              dispatch={dispatch}
+            />
+          )}
 
           {p === "drafting" && demo && registry && otherRole && (
             <Negotiate
@@ -635,25 +659,7 @@ export default function Page() {
             />
           )}
 
-          <section className="sec" aria-labelledby="log-title">
-            <h2 className="sec__title" id="log-title">
-              Ledger
-            </h2>
-            <ol className="ledger">
-              {[...state.events]
-                .slice(-40)
-                .reverse()
-                .map((e) => (
-                  <li key={e.id} className="ledger__item" data-actor={e.actor === role ? "me" : e.actor === "system" ? "clock" : "them"}>
-                    <span className="ledger__meta mono">
-                      day {e.day}
-                      {e.via === "tool" && e.tool ? ` · via ${e.tool}` : ""}
-                    </span>
-                    <span className="ledger__text">{e.text}</span>
-                  </li>
-                ))}
-            </ol>
-          </section>
+          <LedgerSection state={state} role={role} />
         </div>
 
         {demo && (
@@ -775,7 +781,16 @@ function Banner({
   return (
     <header className="banner">
       <div className="banner__mark">
-        <span className="wordmark">Slate</span>
+        {/*
+          A plain anchor, not next/link. The workbench lives at "/", so a soft
+          navigation to "/" changes no route and React keeps every piece of
+          client state — the click appears to do nothing. A document load
+          re-runs bootstrap and returns to a fresh slate. The current room is
+          already in the address and in localStorage, so Back still works.
+        */}
+        <a href="/" className="wordmark wordmark--link">
+          Slate
+        </a>
         <span className="banner__room">/ {room}</span>
       </div>
 
@@ -795,13 +810,17 @@ function Banner({
             <>
               <span className="presence__dot" data-on={theirs.online || undefined} aria-hidden="true" />
               <span>
+                <Avatar name={theirName} className="avatar" />
                 {theirs.online ? `${theirName} is here` : `${theirName} · seen ${relative(theirs.lastSeen, now ?? Date.now())}`}
               </span>
             </>
           ) : (
             <>
               <span className="presence__dot" aria-hidden="true" />
-              <span>{theirName} hasn&rsquo;t opened their half</span>
+              <span>
+                <Avatar name={theirName} className="avatar" />
+                {theirName} hasn&rsquo;t opened their half
+              </span>
               {inviteUrl && (
                 <button type="button" className="btn btn--sm" onClick={() => void copy()}>
                   {copied ? "Copied" : "Copy invite"}
@@ -816,9 +835,14 @@ function Banner({
       <div className="banner__side">
         {inWork && demo && (
           <>
-            <span className="provider-chip" data-native={provider !== "shim"}>
+            <span
+              className="provider-chip"
+              data-native={provider !== "shim"}
+              data-fallback={provider === "shim"}
+              title={providerStatus(provider).detail}
+            >
               <span className="provider-chip__dot" aria-hidden="true" />
-              {provider === "shim" ? "shim" : "native"}
+              {providerStatus(provider).label}
             </span>
             <span className="provider-chip" data-native={live} title={live ? "Live: the other half's moves arrive as they happen" : "Polling: the event stream is down"}>
               <span className="provider-chip__dot" aria-hidden="true" />
@@ -846,12 +870,62 @@ function Banner({
   );
 }
 
+/**
+ * The ledger grows for the whole life of a slate, and it rendered in full — on
+ * a played-through demonstration that is dozens of rows pushing everything else
+ * off the screen. The recent past is what you read; the rest is on request.
+ */
+const LEDGER_RECENT = 6;
+
+function LedgerSection({ state, role }: { state: LoanState; role: Role }) {
+  const [showAll, setShowAll] = useState(false);
+  const entries = useMemo(() => [...state.events].slice(-40).reverse(), [state.events]);
+  const shown = showAll ? entries : entries.slice(0, LEDGER_RECENT);
+  const hidden = entries.length - shown.length;
+
+  return (
+    <section className="sec" aria-labelledby="log-title">
+      <h2 className="sec__title" id="log-title">
+        Ledger
+      </h2>
+      <ol className="ledger">
+        {shown.map((e) => (
+          <li
+            key={e.id}
+            className="ledger__item"
+            data-actor={e.actor === role ? "me" : e.actor === "system" ? "clock" : "them"}
+          >
+            <span className="ledger__meta mono">
+              day {e.day}
+              {e.via === "tool" && e.tool ? ` · via ${e.tool}` : ""}
+            </span>
+            <span className="ledger__text">{e.text}</span>
+          </li>
+        ))}
+      </ol>
+      {(hidden > 0 || showAll) && (
+        <button type="button" className="actions__toggle" onClick={() => setShowAll((v) => !v)} aria-expanded={showAll}>
+          {showAll ? "Show recent only" : `Show ${hidden} earlier ${hidden === 1 ? "entry" : "entries"}`}
+        </button>
+      )}
+    </section>
+  );
+}
+
 function Footer({ provider }: { provider: Provider }) {
+  const status = providerStatus(provider);
   return (
     <footer className="foot">
       <span>Slate — WebMCP capability surface</span>
       <span aria-hidden="true">·</span>
       <span className="mono">{providerLabel(provider)}</span>
+      {status.tone === "fallback" && (
+        <>
+          <span aria-hidden="true">·</span>
+          {/* Hover is not available on touch, so the fallback explains itself here. */}
+          <span className="foot__note">{status.detail}</span>
+        </>
+      )}
     </footer>
   );
 }

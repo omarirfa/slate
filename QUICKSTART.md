@@ -42,7 +42,7 @@ sign; the agents cannot.
 Once the agreement is signed, the borrower's page shows their Bramble Bank account in a
 frame. Press **Prepare … at the bank**: the slate calls the bank's `prepare-transfer`
 across origins and the form fills in. Press **Pay** inside the frame. Within a few seconds
-the borrower's tally logs the payment from the bank's records, and the lender's tally
+the borrower's half logs the payment from the bank's records, and the lender's half
 confirms it against their own incoming transactions — both through tool calls, and the
 ledger says so.
 

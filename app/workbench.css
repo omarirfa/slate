@@ -76,6 +76,16 @@
   background: var(--color-positive);
 }
 
+/* The shim is a fallback, not a fault: amber, never red. */
+.provider-chip[data-fallback="true"] {
+  color: var(--color-caution);
+  border-color: var(--color-caution);
+}
+
+.provider-chip[data-fallback="true"] .provider-chip__dot {
+  background: var(--color-caution);
+}
+
 /* ------------------------------------------------------------------ entry */
 
 .entry {
@@ -230,34 +240,158 @@
   min-width: 0;
 }
 
-/* ---------------------------------------------------------------- summary */
+/* ------------------------------------------------------------------ entry */
 
-.tally {
-  padding: var(--space-lg);
+.entry {
+  flex: 1;
   display: grid;
-  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: var(--space-2xl);
+  align-items: start;
+  max-width: 68rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
 }
 
-.tally__top {
+.entry__display {
+  font-size: var(--text-display);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  max-width: 17ch;
+}
+
+.entry__lede {
+  margin-top: var(--space-md);
+  max-width: 52ch;
+  color: var(--color-ink-2);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+.entry__note {
+  margin-top: var(--space-lg);
+  max-width: 58ch;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.entry__rule {
+  height: 1px;
+  background: var(--color-rule);
+  margin: var(--space-xl) 0 var(--space-lg);
+  max-width: 24rem;
+}
+
+.entry__clauses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-lg);
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: 46ch;
 }
 
-.tally__amount {
+.entry__clause {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr);
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+  line-height: 1.5;
+}
+
+.entry__clause span:first-child {
   font-family: var(--font-outlier);
-  font-size: var(--text-2xl);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  padding-top: 0.15rem;
 }
 
-.tally__caption {
-  margin-top: var(--space-2xs);
+.entry__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+.role-picker {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.role-option {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-md);
+  background: var(--color-paper);
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+@media (hover: hover) {
+  .role-option:hover {
+    background: var(--color-paper-2);
+  }
+}
+
+.role-option:has(input:checked) {
+  border-color: var(--color-ink-2);
+  background: var(--color-paper-2);
+}
+
+.role-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.role-option input {
+  margin: 0;
+  accent-color: var(--color-accent);
+  width: 16px;
+  height: 16px;
+  margin-top: 0.2rem;
+}
+
+.role-option__name {
+  display: block;
+  font-weight: 500;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.role-option__desc {
+  display: block;
+  margin-top: var(--space-3xs);
   font-size: var(--text-sm);
   color: var(--color-muted);
+  line-height: 1.45;
+}
+
+/* -------------------------------------------------------------- workbench */
+
+.work {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.32fr) minmax(0, 1fr);
+  gap: var(--space-lg);
+  align-items: start;
+  max-width: 82rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-3xl);
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  min-width: 0;
 }
 
 .phase {
@@ -605,6 +739,12 @@
   align-items: center;
 }
 
+.foot__note {
+  color: var(--color-caution);
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
 /* ------------------------------------------------------------- responsive */
 
 @media (max-width: 60rem) {
@@ -642,7 +782,6 @@
     padding-inline: var(--space-md);
   }
 
-  .tally,
   .console,
   .entry__form {
     padding: var(--space-md);

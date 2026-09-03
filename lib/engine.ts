@@ -515,13 +515,17 @@ export function apply(state: LoanState, action: Action): ActionResult {
       if (p.lenderName) t.lenderName = String(p.lenderName).slice(0, 24);
       if (p.borrowerName) t.borrowerName = String(p.borrowerName).slice(0, 24);
       s.terms = t;
+      // `who` was read before this action ran, so it still holds the old name.
+      // Proposing is the one action that can rename the parties, so the entry
+      // has to be written with the names the proposal just set.
+      const proposer = role === "lender" ? t.lenderName : t.borrowerName;
       s.proposal = { by: role, day: s.day, terms: t, accepted: false };
       s.signatures = { lender: false, borrower: false };
       log(s, {
         actor: role,
         via,
         tool: via === "tool" ? "propose-terms" : undefined,
-        text: `${who} proposed terms: ${money(t.principal, t.currency)} over ${t.installmentCount} payments, ${t.reminderBudget} reminders per month, ${t.cureDays}-day cure period.`,
+        text: `${proposer} proposed terms: ${money(t.principal, t.currency)} over ${t.installmentCount} payments, ${t.reminderBudget} reminders per month, ${t.cureDays}-day cure period.`,
       });
       message = "Terms proposed. The other half now has an answer to give.";
       break;

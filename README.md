@@ -3,7 +3,7 @@
 **You get two nudges a month. Then Slate won't let you.**
 
 A loan between friends, held in both their hands. Something owed is on the slate;
-forgiving it wipes the slate. (The mechanism is older than the name: a tally stick was
+forgiving it wipes the slate. (The mechanism is older than the software: a split stick was
 split lengthways so neither half could be altered alone.)
 
 Built as a WebMCP demonstration.
@@ -52,7 +52,7 @@ stay as prose. The app is honest about which half of an agreement a machine can 
 - **Dynamic registration.** `lib/engine.ts` derives a capability surface from loan state;
   `ToolRegistry.sync()` diffs it against what is registered and registers or aborts the
   difference. An unavailable clause is an **absent tool**, not a disabled button.
-- **Per-party surfaces.** The lender and borrower see different tools on the same tally.
+- **Per-party surfaces.** The lender and borrower see different tools on the same slate.
   Set `NEXT_PUBLIC_PARTNER_ORIGIN` and tools register with `exposedTo` and are
   discovered with `getTools({ fromOrigins })`, making the isolation browser-enforced
   across origins. Unset, the two halves share one origin and the server checks every

@@ -353,6 +353,47 @@ export function providerLabel(p: Provider): string {
     case "navigator":
       return "navigator.modelContext — native, deprecated alias";
     default:
-      return "in-page shim — no native WebMCP detected";
+      return "in-page shim — this browser exposes no native WebMCP";
+  }
+}
+
+/**
+ * What the status chip says. The shim is a designed fallback, not a fault: the
+ * page behaves identically either way. So the chip is amber, never red, and the
+ * detail line says what is missing and how to get the native path — a person on
+ * a browser without WebMCP should not be left guessing at a four-letter word.
+ */
+export type ProviderStatus = {
+  /** Chip text. */
+  label: string;
+  /** Drives the chip's colour. */
+  tone: "native" | "fallback";
+  /** Tooltip, and the sentence shown beside the chip when running on the shim. */
+  detail: string;
+};
+
+export function providerStatus(p: Provider): ProviderStatus {
+  switch (p) {
+    case "document":
+      return {
+        label: "native",
+        tone: "native",
+        detail:
+          "This browser implements WebMCP itself, so tools register on document.modelContext and its own agent can discover them.",
+      };
+    case "navigator":
+      return {
+        label: "native (alias)",
+        tone: "native",
+        detail:
+          "This browser exposes WebMCP on navigator.modelContext, the older alias. It works, but the spec has moved to document.modelContext.",
+      };
+    default:
+      return {
+        label: "shim — no browser WebMCP",
+        tone: "fallback",
+        detail:
+          "This browser exposes neither document.modelContext nor navigator.modelContext, so Slate is running its own implementation of the same spec. Everything on this page works exactly the same; what is missing is the browser's built-in agent being able to see the tools. For that, use Chrome with the WebMCP origin trial enabled.",
+      };
   }
 }

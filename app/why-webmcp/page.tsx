@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/PageShell";
 
+import People from "@/components/People";
+
 export const metadata: Metadata = {
   title: "Why WebMCP — Slate",
   description: "How a browser API for page-level tools turns the terms of a loan into things that are enforced rather than promised.",
@@ -17,6 +19,8 @@ export default function WhyPage() {
           WebMCP lets a web page register tools that an agent can discover and call, on that page, inside the
           person&rsquo;s own session. Slate uses that one mechanism to make an agreement enforce itself.
         </p>
+
+        <People scene="apart" className="people people--page" />
 
         <h2>What WebMCP is, in a sentence</h2>
         <p>

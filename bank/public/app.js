@@ -129,8 +129,31 @@
 
   const { mc, provider } = window.BankWebMCP.resolve();
   const chip = $("provider-chip");
-  chip.textContent = provider === "shim" ? "shim" : "native";
+  /* The shim is the designed fallback, not a fault — amber, and it says why. */
+  const providerInfo = {
+    document: {
+      label: "native",
+      detail: "This browser implements WebMCP itself, on document.modelContext.",
+    },
+    navigator: {
+      label: "native (alias)",
+      detail: "This browser exposes WebMCP on navigator.modelContext, the older alias.",
+    },
+    shim: {
+      label: "shim — no browser WebMCP",
+      detail:
+        "This browser exposes neither document.modelContext nor navigator.modelContext, " +
+        "so this page runs its own implementation of the same spec. The tools below work " +
+        "either way; only the browser's built-in agent cannot see them. For the native " +
+        "path, use Chrome with the WebMCP origin trial enabled.",
+    },
+  }[provider];
+  chip.textContent = providerInfo.label;
+  chip.title = providerInfo.detail;
   chip.dataset.native = String(provider !== "shim");
+  chip.dataset.fallback = String(provider === "shim");
+  const chipNote = $("provider-note");
+  if (chipNote) chipNote.textContent = provider === "shim" ? providerInfo.detail : "";
 
   const text = (t) => ({ content: [{ type: "text", text: t }] });
   const opts = { exposedTo: [PARTNER] };

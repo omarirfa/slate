@@ -38,6 +38,14 @@
       padding: 1px 8px; white-space: nowrap;
     }
     .chip[data-native="true"] { color: var(--green); border-color: var(--green); }
+    .chip[data-fallback="true"] { color: var(--amber); border-color: var(--amber); }
+    /* Hover is not available on touch, so the fallback also explains itself in place. */
+    .provider-note:empty { display: none; }
+    .provider-note {
+      font-size: 12px; line-height: 1.45; color: var(--amber);
+      background: var(--amber-soft); border-radius: 6px;
+      padding: 8px 10px; margin: 10px 0 0;
+    }
 
     .balance { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0 12px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
     .balance__amount { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
@@ -91,6 +99,7 @@
     <span class="spacer"></span>
     <span class="chip" id="provider-chip">…</span>
   </header>
+  <p class="provider-note" id="provider-note"></p>
 
   <div class="balance">
     <span class="balance__amount" id="balance">—</span>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/PageShell";
+
 import { SCENARIO } from "@/lib/scenario";
 
 export const metadata: Metadata = {
@@ -9,6 +10,17 @@ export const metadata: Metadata = {
 };
 
 const WHO: Record<string, string> = { lender: "Priya", borrower: "Marcus" };
+
+/**
+ * Generated voxel art (see art/). Width and height are the assets' real pixel
+ * dimensions: given both, the browser reserves the right box before the image
+ * loads, so nothing on the page jumps. `height: auto` in CSS keeps the ratio
+ * while the width scales down to the column.
+ */
+const AVATAR: Record<string, { src: string; w: number; h: number }> = {
+  lender: { src: "/art/avatar-priya.png", w: 73, h: 79 },
+  borrower: { src: "/art/avatar-marcus.png", w: 61, h: 76 },
+};
 
 function what(action: string, payload?: Record<string, unknown>): string {
   switch (action) {
@@ -35,6 +47,14 @@ export default function WalkthroughPage() {
           Two of the steps are refused on purpose — those are the ones to watch.
         </p>
 
+        <img
+          className="art art--hero"
+          src="/art/hero-pair.png"
+          width={741}
+          height={525}
+          alt="Priya and Marcus either side of a notched stick, a hand each on their own end."
+        />
+
         <div className="choice">
           <div className="choice__card">
             <h2 className="choice__title">Simulate it for me</h2>
@@ -58,6 +78,14 @@ export default function WalkthroughPage() {
           </div>
         </div>
 
+        <img
+          className="art art--desk"
+          src="/art/desk.png"
+          width={669}
+          height={408}
+          alt="A person at a desk with an open ledger."
+        />
+
         <p className="prose__note">
           Neither option needs an API key. With one, the stand-in and the negotiators can be driven by a model instead
           of rules; your key is used for the call and not stored anywhere.
@@ -77,8 +105,19 @@ export default function WalkthroughPage() {
               <div>
                 <p className="step__caption">{s.caption}</p>
                 <p className="step__meta mono">
-                  {WHO[s.role]} · {what(s.action, s.payload)}
-                  {s.expectRefusal ? " · refused, on purpose" : ""}
+                  {/* Decorative: the name it belongs to is the next thing read. */}
+                  <img
+                    className="art-avatar"
+                    src={AVATAR[s.role].src}
+                    width={AVATAR[s.role].w}
+                    height={AVATAR[s.role].h}
+                    alt=""
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {WHO[s.role]} · {what(s.action, s.payload)}
+                    {s.expectRefusal ? " · refused, on purpose" : ""}
+                  </span>
                 </p>
               </div>
             </li>

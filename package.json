@@ -1,0 +1,32 @@
+{
+  "name": "slate",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A loan between friends, held by both halves. A WebMCP demonstration.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "verify": "bash scripts/verify.sh",
+    "bank": "node bank/server.mjs",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:check": "tsc -p cf/tsconfig.json && wrangler deploy --dry-run --outdir .wrangler-dry && wrangler deploy --dry-run --outdir .wrangler-dry-bank --config bank/wrangler.jsonc"
+  },
+  "dependencies": {
+    "next": "^15.5.25",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "@opennextjs/cloudflare": "^1.20.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260902.1",
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "typescript": "5.7.3",
+    "wrangler": "^4.128.0"
+  }
+}

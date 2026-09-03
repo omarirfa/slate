@@ -1,0 +1,33 @@
+# Render keeps a single instance on the starter plan, which is what the
+# in-memory room store needs. Deploy, then open the URL in Chrome.
+services:
+  - type: web
+    name: slate
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    numInstances: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Optional: set to the origin serving the other half to make tool
+      # discovery browser-enforced across origins via exposedTo / fromOrigins.
+      # - key: NEXT_PUBLIC_PARTNER_ORIGIN
+      #   value: https://slate-borrower.onrender.com
+      # The bank service below. Baked in at build time.
+      - key: NEXT_PUBLIC_BANK_ORIGIN
+        value: https://bramble-bank.onrender.com
+  - type: web
+    name: bramble-bank
+    runtime: node
+    plan: starter
+    buildCommand: "true"
+    startCommand: node bank/server.mjs
+    numInstances: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # The only origin the bank exposes its tools to.
+      - key: BANK_PARTNER_ORIGIN
+        value: https://slate-app.onrender.com

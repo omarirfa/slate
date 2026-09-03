@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.env.local
+.env
+.verify/
+.open-next/
+.wrangler/
+.wrangler-dry/
+.wrangler-dry-bank/
+.dev.vars
+bank/.wrangler/
+bank/.wrangler-dry-bank/
+.zip

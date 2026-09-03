@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bramble Bank</title>
+  <style>
+    :root {
+      --paper: #f3f6f2;
+      --paper-2: #e8ede6;
+      --rule: #cfd8cc;
+      --ink: #17302a;
+      --ink-2: #3f5a52;
+      --muted: #6f857e;
+      --green: #1f6b57;
+      --green-soft: #dcebe4;
+      --red: #a23b2e;
+      --amber: #8a6a1c;
+      --amber-soft: #f3e9cf;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--paper); color: var(--ink); }
+    body {
+      font: 14px/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      padding: 14px 16px 18px;
+    }
+    header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+    .name { font-weight: 700; letter-spacing: -0.01em; font-size: 15px; }
+    .name::before {
+      content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 7px;
+      border-radius: 2px 6px 2px 6px; background: var(--green); vertical-align: -1px;
+    }
+    .holder { color: var(--ink-2); }
+    .spacer { flex: 1; }
+    .chip {
+      font-size: 11px; color: var(--muted); border: 1px solid var(--rule); border-radius: 999px;
+      padding: 1px 8px; white-space: nowrap;
+    }
+    .chip[data-native="true"] { color: var(--green); border-color: var(--green); }
+
+    .balance { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0 12px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .balance__amount { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+    .balance__meta { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.35; }
+
+    h2 { font-size: 12px; font-weight: 600; color: var(--ink-2); margin: 14px 0 6px; text-transform: none; letter-spacing: 0; }
+
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    form label { display: grid; gap: 3px; font-size: 12px; color: var(--ink-2); }
+    form label.wide { grid-column: 1 / -1; }
+    input {
+      font: inherit; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 4px;
+      background: #fff; color: var(--ink); min-width: 0; width: 100%;
+    }
+    input:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
+    input[data-prepared="true"] { background: var(--amber-soft); border-color: var(--amber); }
+    .actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+    button {
+      font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 4px; cursor: pointer;
+      background: var(--green); color: #fff; border: 1px solid var(--green);
+    }
+    button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    button[data-armed="true"] { box-shadow: 0 0 0 3px var(--amber-soft), 0 0 0 4px var(--amber); }
+    .status { font-size: 12px; color: var(--muted); }
+    .status[data-tone="ok"] { color: var(--green); }
+    .status[data-tone="error"] { color: var(--red); }
+    .status[data-tone="prepared"] { color: var(--amber); }
+
+    .tx { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+    .tx li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 7px 0; border-bottom: 1px solid var(--paper-2); font-size: 13px; }
+    .tx .who { color: var(--ink); }
+    .tx .ref { grid-column: 1; font-size: 11px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+    .tx .amt { grid-row: 1 / span 2; align-self: center; font-weight: 600; }
+    .tx .amt[data-in="true"] { color: var(--green); }
+    .tx .amt[data-in="true"]::before { content: "+"; }
+    .tx .amt[data-in="false"]::before { content: "−"; }
+    .empty { color: var(--muted); font-size: 12px; padding: 8px 0; }
+
+    footer { margin-top: 14px; font-size: 11px; color: var(--muted); display: grid; gap: 2px; }
+    footer code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--ink-2); }
+
+    @media (prefers-reduced-motion: no-preference) {
+      input[data-prepared="true"] { transition: background-color .25s; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="name" id="bank-name">Bramble Bank</span>
+    <span class="holder" id="holder-label"></span>
+    <span class="spacer"></span>
+    <span class="chip" id="provider-chip">…</span>
+  </header>
+
+  <div class="balance">
+    <span class="balance__amount" id="balance">—</span>
+    <span class="balance__meta" id="account-meta"></span>
+  </div>
+
+  <h2>Send money</h2>
+  <!--
+    Declarative WebMCP: the browser can synthesise a tool from this form.
+    Deliberately no toolautosubmit. An agent may fill it, or call
+    prepare-transfer to have it filled; only the account holder presses Pay.
+  -->
+  <form id="transfer"
+        toolname="send-transfer"
+        tooldescription="Send money from this account to another Bramble Bank account number. Fill the recipient, amount and reference; the account holder must press Pay to complete it.">
+    <label>To
+      <input name="to" id="f-to" required placeholder="br-…"
+             toolparamdescription="The recipient's account number at this bank, e.g. br-31877403." />
+    </label>
+    <label>Amount
+      <input name="amount" id="f-amount" required inputmode="decimal" placeholder="0.00"
+             toolparamdescription="Amount in US dollars, e.g. 400." />
+    </label>
+    <label class="wide">Reference
+      <input name="reference" id="f-ref" maxlength="40" placeholder="Shown to the recipient"
+             toolparamdescription="Payment reference, up to 40 characters. Used by the recipient to match the transfer." />
+    </label>
+    <div class="actions">
+      <button type="submit" id="pay">Pay</button>
+      <span class="status" id="status"></span>
+    </div>
+  </form>
+
+  <h2>Recent transactions</h2>
+  <ul class="tx" id="tx"></ul>
+  <p class="empty" id="tx-empty">No transactions yet.</p>
+
+  <footer>
+    <span id="tools-line">Registering tools…</span>
+    <span>Exposed to <code id="partner">…</code> only. Others cannot discover them.</span>
+  </footer>
+
+  <script src="/webmcp-shim.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

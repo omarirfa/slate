@@ -14,7 +14,7 @@
   "vars": {
     // The only origin the bank exposes its tools to. Set to the slate's URL
     // after the first deploy (wrangler deploy --var or the dashboard).
-    "BANK_PARTNER_ORIGIN": "http://localhost:3000"
+    "BANK_PARTNER_ORIGIN": "https://slate.omar-irfan.workers.dev"
   },
   "observability": { "enabled": true }
 }

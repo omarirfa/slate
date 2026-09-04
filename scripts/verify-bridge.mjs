@@ -117,7 +117,7 @@ await bank.mc.registerTool(
     description: "Read the balance.",
     inputSchema: { type: "object", properties: {} },
     annotations: { readOnlyHint: true },
-    execute: async () => text("Marcus has $1,435 available."),
+    execute: async () => text("Hugo has $1,435 available."),
   },
   { exposedTo: [SLATE] }
 );
@@ -163,9 +163,9 @@ await check("without fromOrigins the bank's tools are not returned", async () =>
 await check("executeTool on a bank tool runs in the bank's context", async () => {
   const tools = await slate.context.getTools({ fromOrigins: [BANK] });
   const tool = tools.find((t) => t.name === "prepare-transfer");
-  const result = await slate.context.executeTool(tool, { to: "Priya", amount: 400 });
-  assert.deepStrictEqual(prepared, { to: "Priya", amount: 400 });
-  assert.match(result.content[0].text, /Prepared \$400 to Priya/);
+  const result = await slate.context.executeTool(tool, { to: "Amicia", amount: 400 });
+  assert.deepStrictEqual(prepared, { to: "Amicia", amount: 400 });
+  assert.match(result.content[0].text, /Prepared \$400 to Amicia/);
 });
 
 await check("a stranger origin discovers nothing and cannot execute", async () => {
@@ -183,7 +183,7 @@ await check("a stranger origin discovers nothing and cannot execute", async () =
     stranger.context.executeTool({ name: "prepare-transfer", origin: BANK }, { to: "Mallory", amount: 999 }),
     /No tool named "prepare-transfer" is exposed to https:\/\/stranger\.example/
   );
-  assert.deepStrictEqual(prepared, { to: "Priya", amount: 400 }, "stranger must not have run the tool");
+  assert.deepStrictEqual(prepared, { to: "Amicia", amount: 400 }, "stranger must not have run the tool");
   // Restore the slate as the caller.
   bankWin.postMessage = postAs(slateWin, bankWin);
   globalThis.window = slateWin;

@@ -201,7 +201,6 @@ export function capabilities(s: LoanState, role: Role): CapabilityView[] {
   const near = nextDueDay(s);
   const dueSoon = near !== null && near - s.day <= 7;
 
-  const them = nameFor(s, other(role));
   const caps: CapabilityView[] = [];
 
   /* ---- read tools, always on ---- */
@@ -221,7 +220,6 @@ export function capabilities(s: LoanState, role: Role): CapabilityView[] {
   });
 
   /* ---- drafting ---- */
-  const bothSigned = s.signatures.lender && s.signatures.borrower;
   caps.push({
     name: "propose-terms",
     title: "Propose terms",
@@ -455,6 +453,21 @@ export function apply(state: LoanState, action: Action): ActionResult {
   const p = action.payload ?? {};
   let message = "";
 
+  /*
+    The two irreversible actions require a typed acknowledgement. This used to
+    live only in lib/tools.ts, which meant it held for tool calls and for the
+    UI but not for a direct POST to /api/state — the wrapper checked it and
+    then dispatched with an empty payload, so the engine never saw one. The
+    claim is that enforcement lives in the capability layer rather than in a
+    guard that can be gone around, so the check belongs here, on every path.
+  */
+  const needsAcknowledgement = (expected: string, note: string): string | null => {
+    const given = String((action.payload ?? {}).acknowledgement ?? "").trim();
+    const norm = (v: string) => v.replace(/[^0-9a-z]/gi, "").toLowerCase();
+    if (norm(given) === norm(expected)) return null;
+    return `Not done. ${note} Pass acknowledgement set to "${expected}" to confirm.`;
+  };
+
   const deny = (why: string): ActionResult => ({
     ok: false,
     state,
@@ -687,6 +700,11 @@ export function apply(state: LoanState, action: Action): ActionResult {
     case "declare-default": {
       const why = gate("declare-default");
       if (why) return deny(why);
+      const unconfirmed = needsAcknowledgement(
+        nameFor(s, other(role)),
+        "This is a consequential action and it names the other party."
+      );
+      if (unconfirmed) return deny(unconfirmed);
       s.defaulted = true;
       s.defaultedDay = s.day;
       log(s, {
@@ -703,6 +721,11 @@ export function apply(state: LoanState, action: Action): ActionResult {
       const why = gate("forgive-remaining");
       if (why) return deny(why);
       const left = outstanding(s);
+      const unconfirmed = needsAcknowledgement(
+        String(Math.round(left / 100)),
+        `This is irreversible: it forgives ${money(left, s.terms.currency)} and takes every collection capability off the board for good.`
+      );
+      if (unconfirmed) return deny(unconfirmed);
       s.forgiven = true;
       s.forgivenDay = s.day;
       log(s, {

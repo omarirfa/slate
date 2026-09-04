@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { StandInAgent, type AgentMode, type TraceEntry } from "@/lib/agent";
 import { negotiationBrief, negotiationSettled, negotiationWants, POSITIONS, proposalCount } from "@/lib/negotiate";
 import type { LoanState, Role } from "@/lib/types";
-import type { OwnKey } from "@/lib/keys";
 import type { ModelContextLike } from "@/lib/webmcp";
 
 interface Props {
@@ -14,7 +13,6 @@ interface Props {
   myRole: Role;
   modelAvailable: boolean;
   modelName: string | null;
-  own?: OwnKey | null;
   /** Called with the step to preselect in the console, e.g. sign-agreement. */
   onSign: () => void;
 }
@@ -32,7 +30,7 @@ const MAX_ROUNDS = 8;
  * executeTool() — with sign-agreement excluded from what they may see. When
  * accept-terms lands, the agents stop and the two people sign.
  */
-export default function Negotiate({ state, contexts, myRole, modelAvailable, modelName, own, onSign }: Props) {
+export default function Negotiate({ state, contexts, myRole, modelAvailable, modelName, onSign }: Props) {
   const [running, setRunning] = useState(false);
   const [mode, setMode] = useState<AgentMode>("rules");
   const [lines, setLines] = useState<Line[]>([]);
@@ -58,9 +56,9 @@ export default function Negotiate({ state, contexts, myRole, modelAvailable, mod
         wants: negotiationWants,
         brief: negotiationBrief,
         exclude: ["sign-agreement"],
-        apiKey: own?.key ?? null,
-        provider: own?.provider ?? null,
-        modelName: own?.model ?? null,
+        apiKey: null,
+        provider: null,
+        modelName: null,
       });
     const agents: Record<Role, StandInAgent> = { lender: make("lender"), borrower: make("borrower") };
 

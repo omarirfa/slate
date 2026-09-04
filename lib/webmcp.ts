@@ -63,6 +63,15 @@ const BRIDGE_TIMEOUT_MS = 6000;
  * either way.
  */
 class ModelContextShim extends EventTarget implements ModelContextLike {
+  /**
+   * A polyfill should say so. Once the shim publishes itself on
+   * `document.modelContext` (see `publishShim`), detection would otherwise
+   * find it there on the next call, see a working `registerTool`, and report
+   * native WebMCP on a browser that has none — the chip would read `native`
+   * and the whole shim-versus-native distinction would quietly invert.
+   */
+  readonly isSlateShim = true;
+
   private tools = new Map<string, ModelContextTool & { origin: string }>();
   private frames = new Map<string, Window>();
   private pending = new Map<string, { resolve: (v: any) => void; reject: (e: Error) => void; origin: string }>();
@@ -204,16 +213,41 @@ export function resolveModelContext(): { mc: ModelContextLike; provider: Provide
     if (!shimSingleton) shimSingleton = new ModelContextShim();
     return { mc: shimSingleton, provider: "shim" };
   }
+  // `!isSlateShim` on both: our own polyfill must never be mistaken for the
+  // browser's implementation, or publishing it would poison this check.
   const doc = (document as any).modelContext;
-  if (doc && typeof doc.registerTool === "function") {
+  if (doc && typeof doc.registerTool === "function" && !doc.isSlateShim) {
     return { mc: doc as ModelContextLike, provider: "document" };
   }
   const nav = (navigator as any).modelContext;
-  if (nav && typeof nav.registerTool === "function") {
+  if (nav && typeof nav.registerTool === "function" && !nav.isSlateShim) {
     return { mc: nav as ModelContextLike, provider: "navigator" };
   }
   if (!shimSingleton) shimSingleton = new ModelContextShim();
   return { mc: shimSingleton, provider: "shim" };
+}
+
+/**
+ * Put the shim on `document.modelContext` so anything outside this bundle — a
+ * browser extension, a devtools snippet, an inspector — can discover and call
+ * the page's tools.
+ *
+ * This is not a security boundary either way: a script running in this page
+ * can already click the buttons, read the DOM and use the session. What it
+ * changes is discoverability, which is the point of an inspector.
+ *
+ * Off unless asked for, because a page that publishes a polyfill under the
+ * real API name is making a claim about the browser that is not true. `?inspect=1`
+ * opts in; the marker above keeps the status chip honest either way.
+ */
+export function publishShim(): boolean {
+  if (typeof window === "undefined") return false;
+  const existing = (document as any).modelContext;
+  // Never shadow a real implementation.
+  if (existing && typeof existing.registerTool === "function" && !existing.isSlateShim) return false;
+  if (!shimSingleton) shimSingleton = new ModelContextShim();
+  (document as any).modelContext = shimSingleton;
+  return true;
 }
 
 /* --------------------------------------------------- registration manager */

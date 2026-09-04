@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/PageShell";
 
-import People from "@/components/People";
+import Figure from "@/components/Figure";
 
 export const metadata: Metadata = {
   title: "The problem — Slate",
@@ -19,7 +19,7 @@ export default function ProblemPage() {
           It goes wrong the same way every time, and the money is rarely the part that hurts.
         </p>
 
-        <People scene="asking" className="people people--page" />
+        <Figure scene="asking" className="art art--page" />
 
         <h2>What actually happens</h2>
         <p>

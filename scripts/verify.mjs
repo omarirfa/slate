@@ -4,7 +4,7 @@
  */
 import assert from "node:assert";
 
-const { apply, capability, newLoan, daysOverdue, reminderUsage } = await import(
+const { apply, capability, newLoan, daysOverdue, reminderUsage, outstanding } = await import(
   "../.verify/engine.js"
 );
 const { DEFAULT_TERMS } = await import("../.verify/types.js");
@@ -151,7 +151,15 @@ check("forgiveness is the lender's alone", () => {
   assert(!can("borrower", "forgive-remaining"), "borrower cannot forgive their own debt");
 });
 
-act("forgive-remaining", "lender");
+// The engine now requires the typed acknowledgement on every path, not just
+// through the tool wrapper, so the check has to supply it like any caller.
+const owed = String(Math.round(outstanding(s) / 100));
+check("forgiveness without the acknowledgement is refused", () => {
+  const r = apply(s, { type: "forgive-remaining", role: "lender", via: "tool", payload: {} });
+  assert(!r.ok, "an irreversible action should not go through unconfirmed");
+  assert(/acknowledgement/i.test(r.message), r.message);
+});
+act("forgive-remaining", "lender", { acknowledgement: owed });
 
 check("forgiveness takes every collection capability off the board for good", () => {
   assert(!can("lender", "send-reminder"), "reminders gone");

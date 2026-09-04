@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { money, pendingPayments } from "@/lib/engine";
 import type { CapabilityView, LoanState, Role } from "@/lib/types";
 import type { ModelContextLike, RegisteredTool } from "@/lib/webmcp";
-import { Avatar } from "@/components/People";
+import { Avatar } from "@/components/Figure";
 
 interface Props {
   caps: CapabilityView[];
@@ -55,6 +55,16 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
   const [showClosed, setShowClosed] = useState(false);
   const [pulse, setPulse] = useState<string | null>(null);
   const prev = useRef<Map<string, boolean> | null>(null);
+  /*
+    Loading an existing slate produces one capability diff that is not a real
+    event: the first render is against default terms, and the room's actual
+    state arrives a moment later. That diff was tripping the auto-open below,
+    so the closed list was already expanded on every page load — which defeats
+    collapsing it in the first place. Changes inside this window are drawn, but
+    they do not force the disclosure open.
+  */
+  const mountedAt = useRef(0);
+  if (mountedAt.current === 0) mountedAt.current = Date.now();
 
   useEffect(() => {
     const now = new Map(caps.map((c) => [c.name, c.available]));
@@ -68,10 +78,12 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
         // A capability that just shut is the whole point of the demonstration.
         // If it flashed inside a collapsed list nobody would see it, so a
         // change on the closed side opens the disclosure once.
-        for (const name of changed) {
-          if (now.get(name) === false) {
-            setShowClosed(true);
-            break;
+        if (Date.now() - mountedAt.current > 1500) {
+          for (const name of changed) {
+            if (now.get(name) === false) {
+              setShowClosed(true);
+              break;
+            }
           }
         }
         const timer = setTimeout(() => setFlash(new Set()), 2600);
@@ -255,7 +267,7 @@ export default function Actions({ caps, tools, mc, state, role, myName, theirNam
       <div className="panel__head">
         <h2 className="panel__title" id="actions-title">
           {/* The surface belongs to a person, so show the person. */}
-          <Avatar name={myName} className="avatar" />
+          <Avatar role={role} className="avatar" />
           What {myName} can do right now
         </h2>
       </div>

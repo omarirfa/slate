@@ -33,7 +33,7 @@ With an `ANTHROPIC_API_KEY` in `.env.local` you can hand the stand-in to a model
 
 ## Let the agents haggle
 
-On a fresh slate, press **Let the agents negotiate**. Priya's agent opens, Marcus's
+On a fresh slate, press **Let the agents negotiate**. Amicia's agent opens, Hugo's
 counters, they meet in the middle, and the panel stops with *Sign your half*. Both people
 sign; the agents cannot.
 

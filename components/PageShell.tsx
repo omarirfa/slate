@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ThemeToggle from "@/components/ThemeToggle";
 import type { ReactNode } from "react";
 import "@/app/workbench.css";
 
@@ -6,6 +7,7 @@ export const NAV = [
   { href: "/problem", label: "The problem" },
   { href: "/walkthrough", label: "Walkthrough" },
   { href: "/why-webmcp", label: "Why WebMCP" },
+  { href: "/playground", label: "Playground" },
 ] as const;
 
 /** Banner and column for the reading pages. The app itself has its own banner. */
@@ -30,12 +32,12 @@ export default function PageShell({ current, children }: { current: string; chil
           <Link href="/" className="btn btn--sm btn--primary">
             Open a slate
           </Link>
+          {/* Last in the row on every page, so it lands in the same place
+              whether or not the banner also carries a primary action. */}
+          <ThemeToggle />
         </div>
       </header>
       <main className="page">{children}</main>
-      <footer className="footer">
-        <span>Slate is a WebMCP demonstration. The bank is a mock; the money is not real.</span>
-      </footer>
     </div>
   );
 }

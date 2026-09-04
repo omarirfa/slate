@@ -7,23 +7,22 @@ import Actions from "@/components/Actions";
 import SlateBoard from "@/components/SlateBoard";
 import HeroLoop from "@/components/HeroLoop";
 import Opener from "@/components/Opener";
-import { Avatar } from "@/components/People";
-import KeyBox from "@/components/KeyBox";
-import { loadOwnKey, saveOwnKey, type OwnKey } from "@/lib/keys";
+import Figure from "@/components/Figure";
+import { Avatar } from "@/components/Figure";
 import { NAV } from "@/components/PageShell";
 import Link from "next/link";
-import ToolConsole from "@/components/ToolConsole";
 import Simulate from "@/components/Simulate";
-import OtherHalf from "@/components/OtherHalf";
+import Tour from "@/components/Tour";
+import ThemeToggle from "@/components/ThemeToggle";
 import BankPanel from "@/components/BankPanel";
 import Negotiate from "@/components/Negotiate";
 
 import { capabilities, formatDay, nameFor, newLoan, other, phase } from "@/lib/engine";
 import { buildTools } from "@/lib/tools";
-import { StandInAgent, type AgentMode, type TraceEntry } from "@/lib/agent";
-import type { StandInMood } from "@/lib/standin";
+import type { AgentMode } from "@/lib/agent";
 import { DEFAULT_TERMS, type LoanState, type Role } from "@/lib/types";
 import {
+  publishShim,
   ToolRegistry,
   providerLabel,
   providerStatus,
@@ -34,8 +33,6 @@ import type { HalfPresence, Presence } from "@/lib/store";
 
 /** Polling is the fallback when the event stream drops. */
 const POLL_FALLBACK_MS = 6000;
-const TICK_RULES_MS = 2600;
-const TICK_MODEL_MS = 7000;
 
 /**
  * Optional. Set NEXT_PUBLIC_PARTNER_ORIGIN to the origin serving the other
@@ -53,7 +50,6 @@ const BANK_ORIGIN =
   process.env.NEXT_PUBLIC_BANK_ORIGIN?.trim().replace(/\/$/, "") ||
   (process.env.NODE_ENV === "development" ? "http://localhost:3001" : null);
 
-const FROM_ORIGINS = [PARTNER_ORIGIN, BANK_ORIGIN].filter((o): o is string => Boolean(o));
 
 type HalfKeys = Partial<Record<Role, string>>;
 
@@ -79,8 +75,6 @@ export default function Page() {
   const [role, setRole] = useState<Role | null>(null);
   const [keys, setKeys] = useState<HalfKeys>({});
   const [entryNote, setEntryNote] = useState<string | null>(null);
-  const [standIn, setStandIn] = useState(false);
-  const [mood, setMood] = useState<StandInMood>("stretched");
   const [agentMode, setAgentMode] = useState<AgentMode>("rules");
   const [model, setModel] = useState<{
     serverKey: boolean;
@@ -88,23 +82,18 @@ export default function Page() {
     name: string | null;
     defaults: Record<string, string> | null;
   }>({ serverKey: false, provider: null, name: null, defaults: null });
-  // A person's own key: memory by default, this browser only if they ask.
-  const [own, setOwn] = useState<OwnKey | null>(null);
-  const [keyRemembered, setKeyRemembered] = useState(false);
-  const [trace, setTrace] = useState<TraceEntry[]>([]);
   const [state, setState] = useState<LoanState>(() => newLoan("DEMO", DEFAULT_TERMS));
   const [toast, setToast] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [myTools, setMyTools] = useState<RegisteredTool[]>([]);
   const [refused, setRefused] = useState<{ name: string; at: number } | null>(null);
   const [provider, setProvider] = useState<Provider>("shim");
   const [revision, setRevision] = useState(0);
-  const [preselect, setPreselect] = useState<string | null>(null);
   const [simRunning, setSimRunning] = useState(false);
   const [live, setLive] = useState(false);
   const [presence, setPresence] = useState<Presence | null>(null);
   const [demo, setDemoState] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
+  const [tour, setTour] = useState(false);
   const autoplayRef = useRef(false);
   const [now, setNow] = useState(() => Date.now());
   const simRef = useRef(false);
@@ -119,7 +108,7 @@ export default function Page() {
   const stateRef = useRef(state);
   stateRef.current = state;
   const modelAvailableRef = useRef(false);
-  modelAvailableRef.current = model.serverKey || Boolean(own);
+  modelAvailableRef.current = model.serverKey;
   const roleRef = useRef<Role | null>(role);
   roleRef.current = role;
   const keysRef = useRef<HalfKeys>(keys);
@@ -146,8 +135,14 @@ export default function Page() {
       if (stored[roleParam]) setRole(roleParam);
     }
 
-    const theme = localStorage.getItem("slate-theme");
-    if (theme === "dark" || theme === "light") setTheme(theme);
+
+    /*
+      ?inspect=1 puts the shim on document.modelContext so a browser extension
+      or a devtools snippet can discover this page's tools. Off by default: a
+      page that publishes a polyfill under the real API name is making a claim
+      about the browser that is not true.
+    */
+    if (params.get("inspect") === "1") publishShim();
 
     // The demo layer (clock, simulator, stand-in, console) is off unless asked
     // for. ?demo=1 turns it on; the switch in the banner remembers the choice
@@ -174,12 +169,6 @@ export default function Page() {
         })
       )
       .catch(() => setModel({ serverKey: false, provider: null, name: null, defaults: null }));
-
-    const rememberedKey = loadOwnKey();
-    if (rememberedKey) {
-      setOwn(rememberedKey);
-      setKeyRemembered(true);
-    }
   }, []);
 
   // Open the room on first visit: the server mints both half-keys exactly
@@ -215,16 +204,15 @@ export default function Page() {
     };
   }, [room]);
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("slate-theme", theme);
-  }, [theme]);
 
-  const changeKey = useCallback((key: OwnKey | null, remember: boolean) => {
-    setOwn(key);
-    setKeyRemembered(Boolean(key) && remember);
-    saveOwnKey(key && remember ? key : null);
-  }, []);
+  /* The tour offers itself once per tab, the first time a demo is opened. */
+  useEffect(() => {
+    if (!demo || !role) return;
+    if (sessionStorage.getItem("slate-tour") === "seen") return;
+    sessionStorage.setItem("slate-tour", "seen");
+    const t = setTimeout(() => setTour(true), 900);
+    return () => clearTimeout(t);
+  }, [demo, role]);
 
   const setDemo = useCallback((v: boolean) => {
     setDemoState(v);
@@ -451,52 +439,10 @@ export default function Page() {
     [dispatch]
   );
 
-  /* ------------------------------------------------------------- stand-in */
-
-  const agentRef = useRef<StandInAgent | null>(null);
-
-  useEffect(() => {
-    if (!standIn || !otherRole || !otherRegistry || !room) return;
-    const agent = new StandInAgent({
-      mc: otherRegistry.context,
-      role: otherRole,
-      mood,
-      mode: agentMode,
-      apiKey: own?.key ?? null,
-      provider: own?.provider ?? null,
-      modelName: own?.model ?? null,
-      getState: () => stateRef.current,
-      onTrace: (entry) => setTrace((t) => [...t.slice(-59), entry]),
-    });
-    agentRef.current = agent;
-    const timer = setInterval(
-      () => void agent.tick(),
-      agentMode === "model" ? TICK_MODEL_MS : TICK_RULES_MS
-    );
-    return () => {
-      clearInterval(timer);
-      agent.stop();
-      agentRef.current = null;
-    };
-    // mood and mode are pushed in below without restarting the loop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [standIn, otherRole, otherRegistry, room, agentMode]);
-
-  useEffect(() => {
-    agentRef.current?.update({
-      mood,
-      mode: agentMode,
-      apiKey: own?.key ?? null,
-      provider: own?.provider ?? null,
-      modelName: own?.model ?? null,
-    });
-  }, [mood, agentMode, own]);
-
   /* --------------------------------------------------------------- derived */
 
   const caps = useMemo(() => (role ? capabilities(state, role) : []), [state, role]);
   const p = phase(state);
-  const t = state.terms;
 
   // Stable identity matters: the negotiation loop restarts if this changes.
   const bothContexts = useMemo(() => {
@@ -520,7 +466,7 @@ export default function Page() {
   if (!role) {
     return (
       <div className="shell">
-        <Banner room={room} theme={theme} setTheme={setTheme} provider={provider} />
+        <Banner room={room} provider={provider} />
         <main className="entry">
           <div>
             <h1 className="entry__display">You get two nudges a month. Then Slate won&rsquo;t let you.</h1>
@@ -530,6 +476,28 @@ export default function Page() {
               page, for you and for any agent acting for you.
             </p>
             <HeroLoop />
+
+            {/*
+              The demo, offered before the form. Someone landing here has no
+              reason to type two names and an amount yet — they want to see the
+              thing work first. This plays the whole loan with the simulator and
+              the guided tour, without them committing to anything.
+            */}
+            <div className="entry__demo">
+              <Figure scene="pair" className="art art--entry" />
+              <div>
+                <h2 className="entry__demo-title">See it run first</h2>
+                <p>
+                  Seventeen steps from a blank slate to a hardship pause, both halves, each one a
+                  real WebMCP tool call. Two are refused on purpose. About a minute, with a guided
+                  tour of what to watch.
+                </p>
+                <a href="/?demo=1&autoplay=1" className="btn btn--primary">
+                  Play the demo
+                </a>
+              </div>
+            </div>
+
             <p className="entry__note">
               Asking for time can&rsquo;t be ignored. The borrower gets one pause a year without asking.
               Default waits for the cure period. Wiping the slate takes every collection tool with it.
@@ -565,21 +533,20 @@ export default function Page() {
   const myName = nameFor(state, role);
   const theirName = nameFor(state, other(role));
   const theirs = presence?.[other(role)] ?? null;
-  const modelAvailable = model.serverKey || Boolean(own);
-  const modelLabel = own ? own.model ?? model.defaults?.[own.provider] ?? own.provider : model.name;
+  const modelAvailable = model.serverKey;
+  const modelLabel = model.name;
 
   return (
     <div className="shell">
       <Banner
         room={room}
         theirName={theirName}
+        theirRole={otherRole}
         theirs={theirs}
         now={now}
         inviteUrl={inviteUrl}
         demo={demo}
         setDemo={setDemo}
-        theme={theme}
-        setTheme={setTheme}
         provider={provider}
         live={live}
       />
@@ -628,7 +595,6 @@ export default function Page() {
               contexts={bothContexts}
               modelAvailable={modelAvailable}
               modelName={modelLabel}
-              own={own}
               onSign={() => void runTool(role, "sign-agreement")}
             />
           )}
@@ -644,8 +610,10 @@ export default function Page() {
             refused={refused}
           />
 
-          {BANK_ORIGIN && registry && (p === "active" || p === "paused") && (
-            <BankPanel
+          {/* Side by side: what the bank did, and what the slate recorded. */}
+          <div className="pair">
+            {BANK_ORIGIN && registry && (p === "active" || p === "paused") && (
+              <BankPanel
               bankOrigin={BANK_ORIGIN}
               registry={registry}
               mc={registry.context}
@@ -655,25 +623,22 @@ export default function Page() {
               theirName={theirName}
               state={state}
               revision={revision}
-              onLink={linkBank}
-            />
-          )}
+                onLink={linkBank}
+              />
+            )}
 
-          <LedgerSection state={state} role={role} />
+            <LedgerSection state={state} role={role} />
+          </div>
         </div>
 
         {demo && (
           <div className="col col--demo">
-            <KeyBox
-              serverKey={model.serverKey}
-              serverProvider={model.provider}
-              serverModel={model.name}
-              defaults={model.defaults}
-              own={own}
-              remembered={keyRemembered}
-              onChange={changeKey}
-            />
-
+            {/*
+              The demo layer is the simulator and nothing else. The key box,
+              the stand-in and the tool console were all controls for driving
+              a real slate by hand; in a demonstration they are furniture that
+              competes with the thing being demonstrated.
+            */}
             <Simulate
               runTool={runTool}
               roomAction={roomAction}
@@ -681,41 +646,18 @@ export default function Page() {
               enabled={Boolean(otherRegistry)}
               autoplay={autoplay}
             />
-
-            <OtherHalf
-              theirName={theirName}
-              theirRole={other(role)}
-              inviteUrl={null}
-              canStandIn={Boolean(otherRegistry)}
-              standIn={standIn}
-              setStandIn={(v) => {
-                setStandIn(v);
-                if (!v) setTrace([]);
-              }}
-              mood={mood}
-              setMood={setMood}
-              mode={agentMode}
-              setMode={setAgentMode}
-              modelAvailable={modelAvailable}
-              modelName={modelLabel}
-              trace={trace}
-              onClearTrace={() => setTrace([])}
-            />
-
-            {registry && (
-              <ToolConsole
-                mc={registry.context}
-                revision={revision}
-                fromOrigins={FROM_ORIGINS.length ? FROM_ORIGINS : null}
-                preselect={preselect}
-                onConsumedPreselect={() => setPreselect(null)}
-              />
-            )}
           </div>
         )}
       </main>
 
       <Footer provider={provider} />
+
+      {demo && !tour && (
+        <button type="button" className="tour__reopen btn btn--sm" onClick={() => setTour(true)}>
+          Guided tour
+        </button>
+      )}
+      {tour && <Tour onClose={() => setTour(false)} />}
 
       {toast && (
         <div className="toast" data-tone={toast.tone === "error" ? "error" : undefined} role="status">
@@ -742,25 +684,23 @@ function relative(ms: number, now: number): string {
 function Banner({
   room,
   theirName,
+  theirRole,
   theirs,
   now,
   inviteUrl,
   demo,
   setDemo,
-  theme,
-  setTheme,
   provider,
   live,
 }: {
   room: string;
   theirName?: string;
+  theirRole?: Role | null;
   theirs?: HalfPresence | null;
   now?: number;
   inviteUrl?: string | null;
   demo?: boolean;
   setDemo?: (v: boolean) => void;
-  theme: "light" | "dark";
-  setTheme: (t: "light" | "dark") => void;
   provider: Provider;
   live?: boolean;
 }) {
@@ -794,7 +734,9 @@ function Banner({
         <span className="banner__room">/ {room}</span>
       </div>
 
-      {!inWork && (
+      {/* Always available: the reading pages are how someone makes sense of
+          what they are looking at, and that is most true mid-demo. */}
+      {(
         <nav className="nav" aria-label="Pages">
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} className="nav__link">
@@ -810,7 +752,7 @@ function Banner({
             <>
               <span className="presence__dot" data-on={theirs.online || undefined} aria-hidden="true" />
               <span>
-                <Avatar name={theirName} className="avatar" />
+                {theirRole && <Avatar role={theirRole} className="avatar" />}
                 {theirs.online ? `${theirName} is here` : `${theirName} · seen ${relative(theirs.lastSeen, now ?? Date.now())}`}
               </span>
             </>
@@ -818,7 +760,7 @@ function Banner({
             <>
               <span className="presence__dot" aria-hidden="true" />
               <span>
-                <Avatar name={theirName} className="avatar" />
+                {theirRole && <Avatar role={theirRole} className="avatar" />}
                 {theirName} hasn&rsquo;t opened their half
               </span>
               {inviteUrl && (
@@ -857,14 +799,9 @@ function Banner({
             <span>Demo</span>
           </label>
         )}
-        <button
-          type="button"
-          className="btn btn--sm btn--ghost"
-          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-        >
-          {theme === "light" ? "Dark" : "Light"}
-        </button>
+        {/* The same control as every other banner, so it looks and behaves
+            identically wherever it appears. */}
+        <ThemeToggle />
       </div>
     </header>
   );

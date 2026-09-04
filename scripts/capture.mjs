@@ -89,7 +89,7 @@ await shot("grant/decline appear on the lender", 22);
 
 // Default is unreachable.
 console.log("\ndefault:");
-await api("declare-default", "lender", { acknowledgement: "Marcus" });
+await api("declare-default", "lender", { acknowledgement: "Hugo" });
 await pause(1400);
 await shot("default refused", 10);
 

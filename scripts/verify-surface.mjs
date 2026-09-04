@@ -233,8 +233,8 @@ await check("after agreement, sign-agreement is on both contexts for the people"
 });
 
 await check("negotiation brief is written for the right party", () => {
-  assert(/You are Priya, the lender/.test(negotiationBrief(s, "lender")));
-  assert(/You are Marcus, the borrower/.test(negotiationBrief(s, "borrower")));
+  assert(/You are Amicia, the lender/.test(negotiationBrief(s, "lender")));
+  assert(/You are Hugo, the borrower/.test(negotiationBrief(s, "borrower")));
   assert(/cannot sign/.test(negotiationBrief(s, "borrower")));
 });
 

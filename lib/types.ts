@@ -95,8 +95,8 @@ export interface CapabilityView {
 export const DEFAULT_TERMS: Terms = {
   principal: 240000,
   currency: "USD",
-  lenderName: "Priya",
-  borrowerName: "Marcus",
+  lenderName: "Amicia",
+  borrowerName: "Hugo",
   installmentCount: 6,
   cadenceDays: 30,
   reminderBudget: 2,

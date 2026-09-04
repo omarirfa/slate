@@ -229,16 +229,6 @@ a {
   letter-spacing: -0.02em;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 
 /* ---------------------------------------------------------------- buttons */
 
@@ -326,14 +316,6 @@ a {
   }
 }
 
-.btn__spinner {
-  width: 13px;
-  height: 13px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 620ms linear infinite;
-}
 
 @keyframes spin {
   to {
@@ -379,12 +361,6 @@ a {
   font-family: var(--font-outlier);
 }
 
-.textarea {
-  min-height: 5.5rem;
-  padding: var(--space-sm);
-  resize: vertical;
-  line-height: var(--lh-body);
-}
 
 @media (hover: hover) {
   .input:hover:not(:disabled),
@@ -410,14 +386,8 @@ a {
 }
 
 .input[aria-invalid="true"],
-.textarea[aria-invalid="true"] {
-  border-color: var(--color-error);
-}
 
 .input::placeholder,
-.textarea::placeholder {
-  color: var(--color-neutral);
-}
 
 .field__help {
   min-height: 1lh; /* reserved so an error never pushes the page down */
@@ -465,74 +435,6 @@ a {
   }
 }
 
-/* ----------------------------------------------------------------- people */
-/*
-  Line-art figures (components/People.tsx). Monochrome and unfilled by
-  construction, so all the stylesheet decides is size, colour and air.
-*/
-.people {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 22rem;
-  /* Monochrome and confident: line art this sparse disappears if it is faint. */
-  color: var(--color-ink-2);
-  opacity: 0.72;
-}
-
-.people--hero {
-  max-width: 26rem;
-  margin: var(--space-xl) 0 var(--space-xs);
-}
-
-.people--page {
-  max-width: 18rem;
-  margin: var(--space-lg) 0 var(--space-xl);
-}
-
-/* Beside a name: sized in em so it rides the text it belongs to. */
-.avatar {
-  width: 1.55em;
-  height: 1.55em;
-  vertical-align: -0.42em;
-  margin-right: 0.4em;
-  color: var(--color-neutral);
-  flex: none;
-}
-
-.avatar--pair {
-  width: 2.6em;
-  height: 2.6em;
-  vertical-align: -0.9em;
-  color: var(--color-rule-2);
-}
-
-/* ------------------------------------------------------------------- logo */
-/*
-  Mark plus live text. The wordmark is not outlined: it stays selectable and
-  it follows the type ramp, so there is nothing to re-export when type changes.
-*/
-.logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.46em;
-  color: inherit;
-  text-decoration: none;
-}
-
-.logo__mark {
-  width: 1.15em;
-  height: 1.15em;
-  flex: none;
-  color: var(--color-accent);
-}
-
-.logo__word {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
 /* -------------------------------------------------------------- voxel art */
 /*
   Generated illustrations (see art/). Every asset is at least twice its display
@@ -558,6 +460,17 @@ a {
   margin: var(--space-lg) auto var(--space-md);
 }
 
+/* On the reading pages the scene sits under the title, quiet and small. */
+.art--page {
+  max-width: 20rem;
+  margin: var(--space-lg) 0 var(--space-xl);
+}
+
+.art--entry {
+  max-width: 12rem;
+  flex: none;
+}
+
 /* A step's avatar sits on the meta line beside the name it belongs to. */
 .step__meta {
   display: flex;
@@ -574,5 +487,359 @@ a {
 @media (max-width: 40rem) {
   .art-avatar {
     width: 26px;
+  }
+}
+
+/* ------------------------------------------------------------- entry demo */
+/*
+  The demo offer on the landing page, ahead of the form: seeing it run is a
+  smaller ask than filling anything in.
+*/
+.entry__demo {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: center;
+  flex-wrap: wrap;
+  margin: var(--space-xl) 0;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+}
+
+.entry__demo > div {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.entry__demo-title {
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.entry__demo p {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+/* ------------------------------------------------- bank beside the ledger */
+/*
+  Two columns so a payment can be watched crossing from the bank on one side to
+  the record on the other. Below the breakpoint they stack, and the bank stays
+  first — it is where the movement starts.
+*/
+.pair {
+  display: grid;
+  /*
+    minmax(0, 1fr) rather than 1fr: a plain 1fr will not shrink a track below
+    its content's min-content width, and the bank's iframe has an intrinsic one.
+    That gave a 516px / 136px split instead of an even pair.
+  */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.pair > * {
+  min-width: 0;
+}
+
+@media (max-width: 60rem) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------------ guided tour */
+/*
+  The tour rings a real element rather than dimming the page: nothing is
+  covered and nothing is disabled, so the slate stays usable while it is open.
+*/
+.tour__ring {
+  position: fixed;
+  z-index: 60;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+  transition: all 220ms ease;
+}
+
+.tour {
+  position: fixed;
+  z-index: 61;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  width: min(23rem, calc(100vw - 2 * var(--space-lg)));
+  padding: var(--space-lg);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-md);
+  background: var(--color-paper);
+  box-shadow: 0 10px 34px rgb(0 0 0 / 0.20);
+}
+
+.tour__count {
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--text-xs);
+  color: var(--color-neutral);
+}
+
+.tour__title {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.tour__body {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-sm);
+  line-height: var(--lh-body);
+  color: var(--color-muted);
+}
+
+.tour__row {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.tour__spacer {
+  flex: 1;
+}
+
+.tour__reopen {
+  position: fixed;
+  z-index: 55;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour__ring {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------- playground */
+/*
+  A responsive grid rather than fixed columns: panels claim a minimum width and
+  the browser fits as many per row as there is room for. That means it reflows
+  by container width on its own, with no breakpoints to keep in sync.
+*/
+.play {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-lg);
+  align-items: start;
+  margin-top: var(--space-xl);
+}
+
+.play__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+}
+
+/* The trace always takes the full width of whatever row it lands on. */
+.play__panel--wide {
+  grid-column: 1 / -1;
+}
+
+.play__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.play__note {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--lh-body);
+  color: var(--color-muted);
+}
+
+.play__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+
+.play__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.play__field--grow {
+  flex: 1 1 12rem;
+}
+
+.play__args {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.play__tools {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--text-sm);
+}
+
+.play__tools li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-xs);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.play__desc {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.play__schema summary {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.play__schema pre {
+  margin: var(--space-2xs) 0 0;
+  font-size: var(--text-xs);
+  overflow-x: auto;
+  max-height: 12rem;
+}
+
+.play__log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2xs);
+  max-height: 26rem;
+  overflow-y: auto;
+}
+
+.play__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-sm);
+  align-items: baseline;
+  font-size: var(--text-sm);
+  padding-bottom: var(--space-2xs);
+  border-bottom: 1px solid var(--color-rule);
+  min-width: 0;
+}
+
+.play__kind {
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--color-neutral);
+  min-width: 4.5rem;
+}
+
+.play__line[data-kind="ok"] .play__kind { color: var(--color-positive); }
+.play__line[data-kind="refused"] .play__kind { color: var(--color-accent); }
+
+.play__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The reading column is narrow by design; the playground wants the room. */
+.prose--wide {
+  max-width: 62rem;
+}
+
+/* ------------------------------------------------------- motion: the theme */
+/*
+  The toggle keeps both glyphs mounted and crossfades between them, so the
+  button never changes width mid-swap. The colour transition on `body` (see
+  --theme-swap above) carries the rest of the page across at the same time.
+*/
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.theme-toggle__glyphs {
+  position: relative;
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+.theme-toggle__glyphs svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity var(--theme-swap) ease,
+    transform var(--theme-swap) cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.theme-toggle__sun { opacity: 1; transform: rotate(0deg) scale(1); }
+.theme-toggle__moon { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+
+[data-theme="dark"] .theme-toggle__sun { opacity: 0; transform: rotate(90deg) scale(0.6); }
+[data-theme="dark"] .theme-toggle__moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+.theme-toggle__label {
+  /* Fixed width so the swap between "Dark" and "Light" does not nudge the row. */
+  min-width: 2.6em;
+  text-align: left;
+}
+
+/* -------------------------------------------------- motion: page transitions */
+/*
+  A short rise-and-fade on the main content of each page. Done in CSS on mount
+  rather than with a transition library: every navigation here replaces the
+  content, so there is nothing to tween between, and an entrance is all that
+  reads as movement anyway.
+
+  Only opacity and transform are animated — both composited, so this cannot
+  cost layout on a slow device.
+*/
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to   { opacity: 1; transform: none; }
+}
+
+.page,
+.work {
+  animation: page-in 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+/* The banner stays put: a header that slides on every navigation reads as a
+   page reload, which is the opposite of what this should feel like. */
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .work {
+    animation: none;
+  }
+  .theme-toggle__glyphs svg {
+    transition: opacity 1ms linear;
+    transform: none !important;
   }
 }

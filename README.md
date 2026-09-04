@@ -61,6 +61,8 @@ stay as prose. The app is honest about which half of an agreement a machine can 
   even consulted.
 - **Annotations.** `readOnlyHint` on the read tools, `destructiveHint` on `declare-default`
   and `forgive-remaining`, both of which additionally require a typed acknowledgement.
+  That check is enforced in the engine, so it holds for a direct API call as well
+  as for a tool call or the UI.
 - **Read tools, not just write tools.** `get-loan-summary` and
   `explain-locked-capability` let an agent ask *which clause* is holding a tool shut.
 - **Declarative API.** The terms form carries `toolname` / `tooldescription` /
@@ -167,3 +169,16 @@ docker build -t slate . && docker run -p 3000:3000 slate
 - The device that opens a room holds both half-keys, which is what lets it run a
   stand-in or the simulator. A device that arrives by invite holds one.
 - Light theme is the default; the toggle is in the banner and the choice persists.
+
+## Inspecting the surface from outside
+
+By default the shim is private to the app bundle, so `document.modelContext` is
+undefined on browsers without native WebMCP and an external inspector finds
+nothing. Add `?inspect=1` to publish it, and a browser extension or a devtools
+snippet can discover and call the page's tools:
+
+    await document.modelContext.getTools()
+
+`/playground` publishes it unconditionally — inspecting the surface is the point
+of that page. The shim marks itself with `isSlateShim`, so publishing it never
+makes the app report native WebMCP when there is none.

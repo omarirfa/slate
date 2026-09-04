@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/PageShell";
 
-import People from "@/components/People";
+import Figure from "@/components/Figure";
 
 export const metadata: Metadata = {
   title: "Why WebMCP — Slate",
@@ -20,7 +20,7 @@ export default function WhyPage() {
           person&rsquo;s own session. Slate uses that one mechanism to make an agreement enforce itself.
         </p>
 
-        <People scene="apart" className="people people--page" />
+        <Figure scene="apart" className="art art--page" />
 
         <h2>What WebMCP is, in a sentence</h2>
         <p>

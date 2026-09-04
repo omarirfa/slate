@@ -42,10 +42,10 @@ export default function HeroLoop() {
 
   return (
     <div className={`loop${fading ? " loop--fading" : ""}`} aria-hidden="true">
-      <div className="loop__head">What Priya can do right now</div>
+      <div className="loop__head">What Amicia can do right now</div>
       <ul className="loop__list">
         <li className={`loop__row${closed ? " loop__row--closed" : ""}${phase === 1 || phase === 2 ? " loop__row--pressed" : ""}`}>
-          <span className="loop__name">Nudge Marcus</span>
+          <span className="loop__name">Nudge Hugo</span>
           {!closed && (
             <span className="tag" data-kind="budget">
               {left} left this month
@@ -67,8 +67,8 @@ export default function HeroLoop() {
         </li>
       </ul>
       <ol className="loop__ledger">
-        {phase >= 2 && <li>Priya nudged Marcus. 0 of 2 left this month.</li>}
-        {phase >= 1 && <li>Priya nudged Marcus. 1 of 2 left this month.</li>}
+        {phase >= 2 && <li>Amicia nudged Hugo. 0 of 2 left this month.</li>}
+        {phase >= 1 && <li>Amicia nudged Hugo. 1 of 2 left this month.</li>}
         <li>Payment was due 1 Oct. 4 days ago.</li>
       </ol>
     </div>

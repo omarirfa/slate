@@ -330,12 +330,8 @@ export function buildTools(s: LoanState, role: Role, dispatch: Dispatch): ToolSp
       }),
       annotations: { destructiveHint: true },
       execute: async (args: { acknowledgement?: string }) => {
-        if ((args?.acknowledgement || "").trim().toLowerCase() !== t.borrowerName.toLowerCase()) {
-          return text(
-            `Not done. This is a consequential action: pass acknowledgement set to "${t.borrowerName}" to confirm.`
-          );
-        }
-        const res = await dispatch("declare-default", {});
+        // Forwarded, not checked and discarded — see forgive-remaining above.
+        const res = await dispatch("declare-default", { acknowledgement: args?.acknowledgement });
         return text(res.message);
       },
     });
@@ -356,16 +352,9 @@ export function buildTools(s: LoanState, role: Role, dispatch: Dispatch): ToolSp
       }),
       annotations: { destructiveHint: true },
       execute: async (args: { acknowledgement?: string }) => {
-        const expect = String(Math.round(outstanding(s) / 100));
-        if (String(args?.acknowledgement ?? "").replace(/[^0-9]/g, "") !== expect) {
-          return text(
-            `Not done. This is irreversible: pass acknowledgement set to "${expect}" to confirm you mean to forgive ${money(
-              outstanding(s),
-              t.currency
-            )}.`
-          );
-        }
-        const res = await dispatch("forgive-remaining", {});
+        // Forwarded, not checked and discarded: the engine enforces this now,
+        // so every path is held to it and this wrapper cannot drift from it.
+        const res = await dispatch("forgive-remaining", { acknowledgement: args?.acknowledgement });
         return text(res.message);
       },
     });
